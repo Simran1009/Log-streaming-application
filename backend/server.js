@@ -7,10 +7,24 @@ const path = require("path");
 
 // Create an Express app
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000; // Use dynamic port for deployment
 
 // Enable CORS
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:3000", // Local frontend
+  "https://your-frontend-deployment-url.vercel.app", // Replace with Vercel frontend URL
+];
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  })
+);
 
 // Create an HTTP server and attach WebSocket
 const server = createServer(app);
@@ -44,7 +58,13 @@ function generateLog() {
   // Send log to connected WebSocket clients
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ timestamp: new Date().toISOString(), level: "INFO", message: logMessage }));
+      client.send(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "INFO",
+          message: logMessage,
+        })
+      );
     }
   });
 }
@@ -56,9 +76,10 @@ setInterval(generateLog, 5000);
 app.get("/api/logs", (req, res) => {
   const logFilePath = path.join(__dirname, "logs.txt");
   if (fs.existsSync(logFilePath)) {
-    const logs = fs.readFileSync(logFilePath, "utf-8")
+    const logs = fs
+      .readFileSync(logFilePath, "utf-8")
       .split("\n")
-      .map(line => {
+      .map((line) => {
         const [timestamp, level, ...messageParts] = line.split(" ");
         return {
           timestamp,
@@ -66,7 +87,7 @@ app.get("/api/logs", (req, res) => {
           message: messageParts.join(" "),
         };
       })
-      .filter(log => log.message);
+      .filter((log) => log.message);
     res.json({ logs });
   } else {
     res.json({ logs: [] });
@@ -92,5 +113,5 @@ app.delete("/api/logs", (req, res) => {
 
 // Start the server
 server.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
