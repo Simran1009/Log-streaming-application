@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose the port that your application will run on
-EXPOSE 3002
+EXPOSE 4000
 
 # Run the server (adjust the path if server.js is in a subfolder)
 CMD ["node", "backend/server.js"]  # Update the path based on where your server.js is located
