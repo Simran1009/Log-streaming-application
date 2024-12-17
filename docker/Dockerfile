@@ -4,11 +4,18 @@ FROM node:16
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# Copy the logger.js file to the container
-COPY logger.js .
+# Copy package.json and package-lock.json to install dependencies
+COPY package*.json ./
 
-# Install dependencies (if any)
-RUN npm init -y
+# Install the dependencies
+RUN npm install
 
-# Run the logger script
-CMD ["node", "logger.js"]
+# Copy the rest of the project files (including backend, frontend, and logger.js)
+COPY . .
+
+# Expose the port that your application will run on
+EXPOSE 3002
+
+# Run the server (adjust if your entry file is different)
+CMD ["node", "server.js"]
+
