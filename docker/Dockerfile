@@ -7,15 +7,14 @@ WORKDIR /usr/src/app
 # Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
 
-# Install the dependencies
+# Install dependencies
 RUN npm install
 
-# Copy the rest of the project files (including backend, frontend, and logger.js)
+# Copy the rest of the project files (including the backend and logger.js)
 COPY . .
 
 # Expose the port that your application will run on
 EXPOSE 3002
 
-# Run the server (adjust if your entry file is different)
-CMD ["node", "server.js"]
-
+# Run the server (adjust the path if server.js is in a subfolder)
+CMD ["node", "backend/server.js"]  # Update the path based on where your server.js is located
