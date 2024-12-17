@@ -1,25 +1,29 @@
-# Stage 1: Build the app
-FROM node:16 as builder
+# Step 1: Build the frontend
+FROM node:16 AS frontend-build
+WORKDIR /app/frontend
 
-WORKDIR /usr/src/app
+# Install dependencies and build the React app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm install
+COPY frontend/ .
+RUN npm run build
 
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-
-# Stage 2: Copy only necessary files to production
+# Step 2: Set up the backend
 FROM node:16
+WORKDIR /app/backend
 
-WORKDIR /usr/src/app
+# Install backend dependencies
+COPY backend/package.json backend/package-lock.json ./
+RUN npm install
 
-# Set environment variable
-ENV NODE_ENV=production
+# Copy backend source code
+COPY backend/ .
 
-COPY --from=builder /usr/src/app .
+# Copy the built frontend from the first stage into the backend 'public' folder
+COPY --from=frontend-build /app/frontend/build /app/backend/public
 
-# Expose the port
+# Expose port 4000 for the backend
 EXPOSE 4000
 
-# Use exec form for CMD
-CMD ["node", "backend/server.js"]
+# Start the backend server
+CMD ["node", "server.js"]
