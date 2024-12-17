@@ -1,20 +1,25 @@
-# Use Node.js as the base image
-FROM node:16
+# Stage 1: Build the app
+FROM node:16 as builder
 
-# Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# Copy the package.json and package-lock.json (if available)
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy the rest of the application files
 COPY . .
 
-# Expose the port your app will run on
+# Stage 2: Copy only necessary files to production
+FROM node:16
+
+WORKDIR /usr/src/app
+
+# Set environment variable
+ENV NODE_ENV=production
+
+COPY --from=builder /usr/src/app .
+
+# Expose the port
 EXPOSE 4000
 
-# Command to start the application (exec form)
+# Use exec form for CMD
 CMD ["node", "backend/server.js"]
