@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 4000
 
 # Run the server (adjusted for your file structure)
-CMD ["node", "backend/server.js"]
+CMD ["node", "server.js"]
