@@ -7,10 +7,13 @@ const path = require("path");
 
 // Create an Express app
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
 // Enable CORS
 app.use(cors());
+
+// Serve static files from the 'public' directory (built React app)
+app.use(express.static(path.join(__dirname, "public")));
 
 // Create an HTTP server and attach WebSocket
 const server = createServer(app);
@@ -44,7 +47,13 @@ function generateLog() {
   // Send log to connected WebSocket clients
   clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ timestamp: new Date().toISOString(), level: "INFO", message: logMessage }));
+      client.send(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "INFO",
+          message: logMessage,
+        })
+      );
     }
   });
 }
@@ -56,17 +65,18 @@ setInterval(generateLog, 5000);
 app.get("/api/logs", (req, res) => {
   const logFilePath = path.join(__dirname, "logs.txt");
   if (fs.existsSync(logFilePath)) {
-    const logs = fs.readFileSync(logFilePath, "utf-8")
+    const logs = fs
+      .readFileSync(logFilePath, "utf-8")
       .split("\n")
-      .map(line => {
-        const [timestamp, level, ...messageParts] = line.split(" ");
+      .filter((line) => line) // Remove empty lines
+      .map((line) => {
+        const [timestamp, ...messageParts] = line.split(" - ");
         return {
           timestamp,
-          level,
-          message: messageParts.join(" "),
+          level: "INFO",
+          message: messageParts.join(" - "),
         };
-      })
-      .filter(log => log.message);
+      });
     res.json({ logs });
   } else {
     res.json({ logs: [] });
@@ -88,6 +98,11 @@ app.delete("/api/logs", (req, res) => {
   });
 
   res.status(200).json({ message: "Logs cleared successfully." });
+});
+
+// Fallback route to serve React frontend (for non-API routes)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Start the server
